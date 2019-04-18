@@ -1,0 +1,133 @@
+extends layout
+
+block content
+  head
+    title ChatIO
+    style.
+      body{
+      background:#f9f9f9;
+      }
+      #container{
+      width:700px;
+      margin:0 auto;
+      }
+      #chatWindow{
+      height:300px;  
+      }
+      #mainWrapper{
+      }
+      #chatWrapper{
+      float:left;
+      border:1px #ccc solid;
+      border-radius: 10px;
+      background:#f4f4f4;
+      padding:10px;
+      }
+      #userWrapper{
+      float:left;
+      border:1px #ccc solid;
+      border-radius: 10px;
+      background:#f4f4f4;
+      padding:10px;
+      margin-left:20px;
+      width:150px;
+      max-height:200px;
+      }
+      #namesWrapper{
+      display:none;
+      float:left;
+      border:1px #ccc solid;
+      border-radius: 10px;
+      background:#f4f4f4;
+      padding:10px;
+      margin-left:20px;
+      }
+      input{
+      height:30px;
+      border:solid 1px #ccc;
+      }
+  body
+    #container
+      #namesWrapper
+        h2 ChatIO
+      #mainWrapper
+        h2 ChatIO
+        #chatWrapper
+          #chatWindow
+          form#messageForm
+            input#message(type='text', size='35', placeholder='Say Something...')
+            input(class="button", type='submit',value='Submit')
+            input(class="button", type='hidden',value='XXX', id='flag')
+            input(class="button", type='submit',value='Rot13', onclick='encode(this.value)')
+            input(class="button", type='submit',value='Caesar', onclick='encode(this.value)')
+            input(class="button", type='submit',value='PigLatin', onclick='encode(this.value)')
+            input(class="button", type='submit',value='Morse', onclick='encode(this.value)')
+        #userWrapper
+          #users 
+    script(src='http://code.jquery.com/jquery-latest.min.js')
+    script(src='/socket.io/socket.io.js')
+    script(type='text/javascript', src='/javascripts/index.js')
+    script.
+      function encode(b){
+      document.getElementById("flag").value = b;
+      }
+      
+      $(function(){
+      var socket = io.connect();
+      var $messageForm = $('#messageForm');
+      var $message = $('#message');
+      var $chat = $('#chatWindow');
+      var $users = $('#users');
+      var $username = $('#username');
+      var encode1;
+      
+      
+
+      
+      $messageForm.submit(function(e){
+      e.preventDefault();
+      encode1 = document.getElementById('flag').value;
+      if ($message.val()) {
+        
+      if (encode1 === 'Rot13') {
+        socket.emit('send message',encoderot13($message.val()));
+        $message.val('');
+      }
+      else if  (encode1 === 'Caesar') {
+        socket.emit('send message',encodecaesar($message.val()));
+        $message.val('');
+      }
+      else if (encode1 === 'PigLatin') {
+        socket.emit('send message',encodepig($message.val()));
+        $message.val('');
+      }
+      else if (encode1 === 'Morse') {
+        socket.emit('send message',encodemorse($message.val()));
+        $message.val('');
+      }
+      else {
+        socket.emit('send message',$message.val());
+        $message.val('');  
+      }
+      }
+      console.log(encode1);
+      encode1 = "XXX";
+      });  
+        
+      
+      socket.emit('new user', '#{user.username}', function(data){
+        data = '#{user.username}';
+      })
+      socket.on('usernames', function(data){
+      var html = '';
+      for(i = 0;i < data.length;i++){
+      html += data[i] + '<br>';
+      }
+      $users.html(html);
+      });
+      
+      socket.on('new message', function(data){
+      $chat.append('#{user.username}'+':'+data.msg+'<br>');
+      });
+      });
+      
